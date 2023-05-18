@@ -1,30 +1,28 @@
-# Docker
-# Build a Docker image
-# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
-
-trigger:
-- main
-
-resources:
-- repo: self
-
-variables:
-  tag: '$(Build.BuildId)'
-
+pool:
+  vmImage: ubuntu-latest
 stages:
-- stage: Build
-  displayName: Build image
+- stage: cd
+  displayName: Continuous deployment
   jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      vmImage: ubuntu-latest
+  - job: docker_build_push
+    displayName: Build Docker Container image
     steps:
     - task: Docker@2
-      displayName: Build an image
+      displayName: Build and push Docker container image to Azure Container Registry
       inputs:
         containerRegistry: 'doctors_azure_acr'
         repository: 'Doctorswebapp'
         command: 'build'
         Dockerfile: '**/Dockerfile'
-        tags: '$(tag)'
+        tags: |
+          $(Build.BuildId)
+          latest
+    - task: Docker@2
+      displayName: Push container image to Azure Container registry
+      inputs:
+        containerRegistry: 'doctors_azure_acr'
+        repository: 'Doctorswebapp'
+        command: 'push'
+        tags: |
+          $(Build.BuildId)
+          latest
